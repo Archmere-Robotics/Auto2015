@@ -13,19 +13,19 @@
 #pragma config(Motor,  mtr_S4_C2_2,     hookLift,      tmotorTetrix, openLoop)
 #pragma config(Motor,  mtr_S4_C3_1,     conveyorMotor, tmotorTetrix, openLoop)
 #pragma config(Motor,  mtr_S4_C3_2,     flagLift,      tmotorTetrix, openLoop)
-#pragma config(Servo,  srvo_S2_C1_1,    hook,                 tServoStandard)
-#pragma config(Servo,  srvo_S2_C1_2,    servo2,               tServoNone)
-#pragma config(Servo,  srvo_S2_C1_3,    servo3,               tServoNone)
-#pragma config(Servo,  srvo_S2_C1_4,    servo4,               tServoNone)
-#pragma config(Servo,  srvo_S2_C1_5,    servo5,               tServoNone)
-#pragma config(Servo,  srvo_S2_C1_6,    servo6,               tServoNone)
-#pragma config(Servo,  srvo_S4_C1_1,    basket,               tServoStandard)
-#pragma config(Servo,  srvo_S4_C1_2,    conveyorLift,         tServoStandard)
-#pragma config(Servo,  srvo_S4_C1_3,    servo9,               tServoNone)
-#pragma config(Servo,  srvo_S4_C1_4,    servo10,              tServoNone)
-#pragma config(Servo,  srvo_S4_C1_5,    servo11,              tServoNone)
-#pragma config(Servo,  srvo_S4_C1_6,    servo12,              tServoNone)
 #ifndef _AUTO2015
 #define _AUTO2015
-//code stuff
+task main() {
+  //drive forward
+  motor[wheelA]=100;
+  motor[wheelB]=-100;
+  motor[wheelC]=100;
+  motor[wheelD]=-100;
+  wait1msec(1000);
+  //stop
+  motor[wheelA]=0;
+  motor[wheelB]=0;
+  motor[wheelC]=0;
+  motor[wheelD]=0;
+}
 #endif
