@@ -8,16 +8,16 @@
 #define _AUTO2015
 const byte CR = 0x13;					// define CR (carriage return)
 const byte LF = 0x10;					// define LF (line feed)
-void saveDataToFile(string *sMsg) {
-	TFileHandle   hFileHandle			// will keep track of our file
-	TFileIOResult nIOResult				// will store our IO results
-	string        sFileName = "encoderData.txt"	// the name of our file
-	int           nFileSize = sizof(*sMsg)+32	// will store our file size. Should be size of string, plus a bit of padding.
+void saveDataToFile(string sMsg) {
+	TFileHandle   hFileHandle;			// will keep track of our file
+	TFileIOResult nIOResult;				// will store our IO results
+	string        sFileName = "encoderData.txt";	// the name of our file
+	short           nFileSize = sizeof(sMsg)+32;	// will store our file size. Should be size of string, plus a bit of padding.
 
 	Delete(sFileName,nIOResult);
 	OpenWrite(hFileHandle, nIOResult, sFileName, nFileSize);    // open the file for writing (creates the file if it does not exist)
-	WriteText(hFileHandle, nIOResult, *sMsg);         // write 'sMessageToWrite' to the file
-	Close(hFileHandle, nIOResult);     
+	WriteString(hFileHandle, nIOResult, sMsg);         // write 'sMessageToWrite' to the file
+	Close(hFileHandle, nIOResult);
 }
 task main() {
   //reset encoders
@@ -40,7 +40,7 @@ task main() {
   motor[wheelB]=-100;
   motor[wheelC]=-100;
   motor[wheelD]=100;
-  wait1Mset(700);
+  wait1Msec(700);
   //stop
   motor[wheelA]=0;
   motor[wheelB]=0;
@@ -49,7 +49,7 @@ task main() {
   int A2= nMotorEncoder[wheelA];
   int C2= nMotorEncoder[wheelC];
   string output;
-  StringFormat(output, "Forward:%c%c\tA: %4d ticks%c%c\tC: %4d ticks%c%cRight:%c%c\tA: %4d ticks%c%c\tC: %4d ticks.",CR,LF,A1,CR,LF,C1,CR,LF,CR,LF,A2,CR,LF,C2);
-  saveDataToFile(&output);
+  stringFormat(output, "Forward:%c%c\tA: %4d ticks%c%c\tC: %4d ticks%c%cRight:%c%c\tA: %4d ticks%c%c\tC: %4d ticks.",CR,LF,A1,CR,LF,C1,CR,LF,CR,LF,A2,CR,LF,C2);
+  saveDataToFile(output);
 }
 #endif
