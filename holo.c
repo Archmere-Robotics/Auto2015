@@ -1,9 +1,23 @@
-#pragma config(Hubs,  S2, HTServo,  none,     none,     none)
-#pragma config(Sensor, S3,     Drivetrain,     sensorI2CMuxController)
-#pragma config(Motor,  mtr_S3_C1_1,     wheelA,        tmotorTetrix, openLoop, reversed, encoder)
-#pragma config(Motor,  mtr_S3_C1_2,     wheelB,        tmotorTetrix, openLoop, reversed)
-#pragma config(Motor,  mtr_S3_C2_1,     wheelC,        tmotorTetrix, openLoop, reversed, encoder)
-#pragma config(Motor,  mtr_S3_C2_2,     wheelD,        tmotorTetrix, openLoop, reversed)
+#pragma config(Hubs,  S1, HTMotor,  HTMotor,  none,     none)
+#pragma config(Hubs,  S2, HTServo,  HTMotor,  none,     none)
+#pragma config(Sensor, S1,     ,               sensorI2CMuxController)
+#pragma config(Sensor, S2,     ,               sensorI2CMuxController)
+#pragma config(Motor,  motorA,          heartbeat,     tmotorNXT, openLoop, encoder)
+#pragma config(Motor,  motorB,          leftHook,      tmotorNXT, PIDControl, encoder)
+#pragma config(Motor,  motorC,          rightHook,     tmotorNXT, PIDControl, encoder)
+#pragma config(Motor,  mtr_S1_C1_1,     wheelB,        tmotorTetrix, PIDControl, reversed, encoder)
+#pragma config(Motor,  mtr_S1_C1_2,     wheelA,        tmotorTetrix, PIDControl, reversed, encoder)
+#pragma config(Motor,  mtr_S1_C2_1,     collectorMotor, tmotorTetrix, openLoop)
+#pragma config(Motor,  mtr_S1_C2_2,     liftMotor,     tmotorTetrix, PIDControl, reversed)
+#pragma config(Motor,  mtr_S2_C2_1,     wheelD,        tmotorTetrix, PIDControl, reversed, encoder)
+#pragma config(Motor,  mtr_S2_C2_2,     wheelC,        tmotorTetrix, PIDControl, reversed, encoder)
+#pragma config(Servo,  srvo_S2_C1_1,    dumpServo,            tServoStandard)
+#pragma config(Servo,  srvo_S2_C1_2,    doorServo,            tServoStandard)
+#pragma config(Servo,  srvo_S2_C1_3,    servo3,               tServoNone)
+#pragma config(Servo,  srvo_S2_C1_4,    servo4,               tServoNone)
+#pragma config(Servo,  srvo_S2_C1_5,    servo5,               tServoNone)
+#pragma config(Servo,  srvo_S2_C1_6,    servo6,               tServoNone)
+#include "libHolonomics.c"
 #ifndef _AUTO2015
 #define _AUTO2015
 const byte CR = 0x13;					// define CR (carriage return)
@@ -24,11 +38,9 @@ task main() {
   nMotorEncoder[wheelA]=0;
   nMotorEncoder[wheelC]=0;
   //drive forward
-  motor[wheelA]=100;
-  motor[wheelB]=-100;
-  motor[wheelC]=100;
-  motor[wheelD]=-100;
+  cDir(-100,-100,100,100);//drive foreward
   wait1Msec(4560);
+  return;
   //store encoder values
   int A1= nMotorEncoder[wheelA];
   int C1= nMotorEncoder[wheelC];
