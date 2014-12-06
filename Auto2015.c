@@ -2,6 +2,7 @@
 #pragma config(Hubs,  S2, HTServo,  HTMotor,  none,     none)
 #pragma config(Sensor, S1,     ,               sensorI2CMuxController)
 #pragma config(Sensor, S2,     ,               sensorI2CMuxController)
+#pragma config(Sensor, S4,     IRSeeker,       sensorHiTechnicIRSeeker600)
 #pragma config(Motor,  motorA,          heartbeat,     tmotorNXT, openLoop, encoder)
 #pragma config(Motor,  motorB,          leftHook,      tmotorNXT, PIDControl, encoder)
 #pragma config(Motor,  motorC,          rightHook,     tmotorNXT, PIDControl, encoder)
@@ -13,7 +14,7 @@
 #pragma config(Motor,  mtr_S2_C2_2,     wheelD,        tmotorTetrix, PIDControl, reversed, encoder)
 #pragma config(Servo,  srvo_S2_C1_1,    dumpServo,            tServoStandard)
 #pragma config(Servo,  srvo_S2_C1_2,    doorServo,            tServoStandard)
-#pragma config(Servo,  srvo_S2_C1_3,    servo3,               tServoNone)
+#pragma config(Servo,  srvo_S2_C1_3,    IRServo,              tServoStandard)
 #pragma config(Servo,  srvo_S2_C1_4,    servo4,               tServoNone)
 #pragma config(Servo,  srvo_S2_C1_5,    servo5,               tServoNone)
 #pragma config(Servo,  srvo_S2_C1_6,    servo6,               tServoNone)
@@ -24,31 +25,47 @@
 #define MAX_SPEED 100
 #define MIN_SPEED 5//lowest speed still moves
 #define SLOW_DOWN 1500
+#define LIFT_SPEED_UP 30//speed while raising
+#define LIFT_SPEED_STOP 0//speed while holding
+#define LIFT_SPEED_DOWN -10
+#define LIFT_BOTTOM 700
+#define LIFT_SLOW_DOWN 100
+#define HOLD_POS 170
+#define DUMP_POS 190
+#define IR_FLIPOUT 28
 
 
+//position variables for all autos
 #define FORWARD_DRIVE 4500//distance to drive forward at the beginning of auto
 #define LEFT_ALIGN 1000//distance to ram side of goal
-#define LEFT_REALIGN 500//idstance to back up and score
+#define LEFT_REALIGN 500//distance to back up and score
+#define HIGH_GOAL 3000
 
-#define ONE_LEFT_DRIVE 3500//for 1
-#define ONE_SPIN 5100//for 1
+
+//variables for auto1
+#define ONE_LEFT_DRIVE 3500
+#define ONE_SPIN 5100
 #define ONE_BACK_DRIVE 2000
 
-#define TWO_SPIN 11000
+//variables for auto2
+#define TWO_SPIN 3500
 #define TWO_BACK_DRIVE 2000
 
+//variables for auto3
 #define THREE_SPIN 2500
 
 void driveForward(int aTicks) {
 	int offset = nMotorEncoder[wheelC];
 	int speed=0;
-	while(nMotorEncoder[wheelC]-offset < aTicks-SLOW_DOWN) {
+	while(nMotorEncoder[wheelC]-offset < aTicks/2) {//ramps up speed for just first half of distance
 		if(speed<MAX_SPEED)speed++;
 		cDir(-speed,-speed,speed,speed);
+		wait1Msec(5);
 	}
 	while(nMotorEncoder[wheelC]-offset < aTicks) {
-		if(speed>5)speed--;
+		if(speed>MIN_SPEED&&nMotorEncoder[wheelC]-offset> aTicks-SLOW_DOWN)speed--;//if close enough to target to use slow down, will slow
 		cDir(-speed,-speed,speed,speed);
+		wait1Msec(5);
 	}
 	cDir(0,0,0,0);
 }
@@ -56,13 +73,15 @@ void driveForward(int aTicks) {
 void driveBackward(int aTicks) {
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
-	while(nMotorEncoder[wheelB]-offset < aTicks-SLOW_DOWN) {
+	while(nMotorEncoder[wheelB]-offset < aTicks/2) {//ramps up speed for first half
 		if(speed<MAX_SPEED)speed++;
 		cDir(speed,speed,-speed,-speed);
+		wait1Msec(5);
 	}
 	while(nMotorEncoder[wheelB]-offset < aTicks) {
-		if(speed>5)speed--;
+		if(speed>MIN_SPEED&&nMotorEncoder[wheelB]-offset>aTicks-SLOW_DOWN)speed--;//if close enough to target to use slow down, will slow
 		cDir(speed,speed,-speed,-speed);
+		wait1Msec(5);
 	}
 	cDir(0,0,0,0);
 }
@@ -70,13 +89,15 @@ void driveBackward(int aTicks) {
 void goLeft(int aTicks) {
 	int offset = nMotorEncoder[wheelA];
 	int speed=0;
-	while(nMotorEncoder[wheelA]-offset < aTicks-SLOW_DOWN) {
+	while(nMotorEncoder[wheelA]-offset < aTicks/2) {
 		if(speed<MAX_SPEED)speed++;
 		cDir(speed,-speed,-speed,speed);
+		wait1Msec(5);
 	}
 	while(nMotorEncoder[wheelA]-offset < aTicks) {
-		if(speed>MIN_SPEED)speed--;
+		if(speed>MIN_SPEED&&nMotorEncoder[wheelA]-offset> aTicks-SLOW_DOWN)speed--;
 		cDir(speed,-speed,-speed,speed);
+		wait1Msec(5);
 	}
 	cDir(0,0,0,0);
 }
@@ -84,13 +105,15 @@ void goLeft(int aTicks) {
 void spinRight(int aTicks){
 	int offset = nMotorEncoder[wheelA];
 	int speed=0;
-	while(nMotorEncoder[wheelA]-offset > -aTicks+SLOW_DOWN) {
+	while(abs(nMotorEncoder[wheelA]-offset) < aTicks/2) {
 		if(speed<MAX_SPEED)speed++;
 		cDir(-speed,-speed,-speed,-speed);
+		wait1Msec(5);
 	}
-	while(nMotorEncoder[wheelA]-offset < aTicks) {
-		if(speed>MIN_SPEED)speed--;
+	while(abs(nMotorEncoder[wheelA]-offset) < aTicks) {
+		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>aTicks-SLOW_DOWN)speed--;
 		cDir(-speed,-speed,-speed,-speed);
+		wait1Msec(5);
 	}
 	cDir(0,0,0,0);
 }
@@ -102,39 +125,102 @@ void realign() {
 		if(speed<MAX_SPEED)speed++;
 		cDir(speed,-speed,-speed,speed);
 	}
+	cDir(0,0,0,0);
+	wait1Msec(100);
 	offset = nMotorEncoder[wheelA];
 	speed=0;
-	while(-nMotorEncoder[wheelA]-offset < LEFT_REALIGN) {
-		if(speed<MAX_SPEED)speed++;
-		cDir(speed,-speed,-speed,speed);
+	while(abs(nMotorEncoder[wheelA]-offset) < LEFT_REALIGN/2) {
+		if(speed<25)speed++;
+		cDir(-speed,speed,speed,-speed);
+		wait1Msec(10);
 	}
+	while(abs(nMotorEncoder[wheelA]-offset) <LEFT_REALIGN) {
+		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>SLOW_DOWN)speed--;
+		cDir(-speed,speed,speed,-speed);
+		wait1Msec(10);
+	}
+	cDir(0,0,0,0);
 }
 
 int getCenterThingPos() {
-	int answer = 1;
+	int answer = 3;
 
+
+	for(int i=0;i<answer;i++){
+		playImmediateTone(1000, 10);
+		wait1Msec(500);
+	}
 	return answer;
 }
-task main() {
-	nMotorEncoder[wheelC]=0;
-	driveForward(FORWARD_DRIVE);
-	switch(getCenterThingPos()) {
-		case 1:
-			goLeft(ONE_LEFT_DRIVE);
-			spinRight(ONE_SPIN);
-			driveBackward(ONE_BACK_DRIVE);
-			realign();
-			break;
-		case 2:
-			spinRight(TWO_SPIN);
-			driveBackward(TWO_BACK_DRIVE);
-			realign();
-			break;
-		case 3:
-			spinRight(THREE_SPIN);
-			realign();
-			break;
-		default:
-			break;
+
+void raise(int height){
+	int speed = 0;
+	while(nMotorEncoder[liftMotor] < height-LIFT_SLOW_DOWN){//speed up and majority of movement
+		if(speed<LIFT_SPEED_UP)speed++;
+		motor[liftMotor]=speed;
 	}
+	while(nMotorEncoder[liftMotor] < height){//lift motor not yet at target
+		if(speed>5)speed--;
+		motor[liftMotor]=speed;
+	}
+	motor[liftMotor]=LIFT_SPEED_STOP;
+	wait1Msec(500);
+}
+
+void dump(){
+	int temp=servo[dumpServo];
+	while(servo[dumpServo]<DUMP_POS){
+		servo[dumpServo]=temp;temp++;
+		wait1Msec(10);
+	}
+	wait1Msec(5000);
+	servo[dumpServo]=HOLD_POS;
+}
+
+void lower(){
+	while(nMotorEncoder[liftMotor] > LIFT_BOTTOM){//lift motor not yet at target
+		motor[liftMotor]=LIFT_SPEED_DOWN;
+	}
+	motor[liftMotor]=LIFT_SPEED_STOP;
+}
+
+void init(){
+	nMotorEncoder[wheelA]=0;nMotorEncoder[wheelB]=0;nMotorEncoder[wheelC]=0;nMotorEncoder[wheelD]=0;nMotorEncoder[liftMotor]=0;
+	servoChangeRate[dumpServo]=0.1;
+	servo[dumpServo]=HOLD_POS;
+	servo[IRServo]=IR_FLIPOUT;
+	wait1Msec(500);
+	//raise(LIFT_BOTTOM);
+}
+
+task main() {
+	init();
+
+	//driveForward(FORWARD_DRIVE);
+	switch(getCenterThingPos()) {
+	case 1:
+		//goLeft(ONE_LEFT_DRIVE);
+		//spinRight(ONE_SPIN);
+		//driveBackward(ONE_BACK_DRIVE);
+		//realign();
+		//raise(HIGH_GOAL);
+		//dump();
+		break;
+	case 2:
+		//spinRight(TWO_SPIN);
+		//driveBackward(TWO_BACK_DRIVE);
+		//realign();
+		//raise(HIGH_GOAL);
+		//dump();
+		break;
+	case 3:
+		//spinRight(THREE_SPIN);
+		//realign();
+		//raise(HIGH_GOAL);
+		//dump();
+		break;
+	default:
+		break;
+	}
+	//lower();
 }
