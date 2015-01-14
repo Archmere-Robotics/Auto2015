@@ -30,20 +30,21 @@ const tMUXSensor IRRight=msensor_S1_2;
 #define MAX_SPEED 55
 #define MIN_SPEED 10//lowest speed still moves
 #define SLOW_DOWN 700
-#define LIFT_SPEED_STOP 1//speed
+#define LIFT_SPEED_STOP 0//speed
 #define LIFT_SPEED_UP 30//speed whwhile holding
 #define LIFT_SPEED_DOWN -3
 #define LIFT_BOTTOM 500
 #define LIFT_SLOW_DOWN 100
-#define HOLD_POS 170
-#define DUMP_POS 195
+#define HOLD_POS 172
+#define DUMP_POS 148
+#define TILT_POS 190
 
 
 //position variables for all autos
 #define FORWARD_DRIVE 3000//distance to drive forward at the beginning of auto
-#define RIGHT_ALIGN 1500//distance to ram side of goal
-#define RIGHT_REALIGN 500//distance to back up and score
-#define HIGH_GOAL 3600
+#define RIGHT_ALIGN 1200//distance to ram side of goal
+#define RIGHT_REALIGN 350//distance to back up and score
+#define HIGH_GOAL 3550
 
 
 //variables for auto1
@@ -247,24 +248,31 @@ void raise(int height){
 	motor[liftMotor]=LIFT_SPEED_STOP;
 	wait1Msec(500);
 }
-
-void dump(){
-	action("Dumping");
+void tilt(){
+	action("Tilting");
 	int temp=servo[dumpServo];
-	while(servo[dumpServo]<DUMP_POS){
+	while(servo[dumpServo]<TILT_POS){
 		servo[dumpServo]=temp++;
 		wait1Msec(10);
 	}
-	wait1Msec(5000);
-	servo[dumpServo]=HOLD_POS;
+	wait1Msec(500);
+}
+void dump(){
+	action("Dumping");
+	int temp=servo[dumpServo];
+	while(servo[dumpServo]>DUMP_POS){
+		servo[dumpServo]=temp--;
+		wait1Msec(10);
+	}
+	wait1Msec(3000);
+	tilt();
 }
 
 void lower(){
-	/*while(nMotorEncoder[liftMotor] > LIFT_BOTTOM){//lift motor not yet at target
+	while(nMotorEncoder[liftMotor] > LIFT_BOTTOM){//lift motor not yet at target
 		motor[liftMotor]=LIFT_SPEED_DOWN;
 	}
-	motor[liftMotor]=LIFT_SPEED_STOP;*/
-	motor[liftMotor]=0;
+	motor[liftMotor]=LIFT_SPEED_STOP;
 }
 void knockdownBalls() {
 	driveForward(KD_FOREWARD);
@@ -274,13 +282,14 @@ void knockdownBalls() {
 void init(){
 	action("Initializing");
 	nMotorEncoder[wheelA]=0;nMotorEncoder[wheelB]=0;nMotorEncoder[wheelC]=0;nMotorEncoder[wheelD]=0;nMotorEncoder[liftMotor]=0;
-	servoChangeRate[dumpServo]=0.1;
+	servoChangeRate[dumpServo]=1;
 	servo[dumpServo]=HOLD_POS;
 	servo[leftIRServo]=LEFT_SERVO_POS;
 	servo[rightIRServo]=RIGHT_SERVO_POS;
 	servo[rightHook]=RIGHT_HOOK_DOWN;
-	wait1Msec(500);
-	//raise(LIFT_BOTTOM);
+	wait1Msec(100);
+	raise(LIFT_BOTTOM);
+	wait1Msec(100);
 }
 
 task main() {
@@ -288,14 +297,16 @@ task main() {
 	//waitForStart();
 	init();
 
-	driveForward(FORWARD_DRIVE);
+	//driveForward(FORWARD_DRIVE);
 	switch(getCenterThingPos()) {
 	case 1:
-		goLeft(ONE_LEFT_DRIVE);
-		driveForward(ONE_FORWARD_DRIVE);
-		realign();
-		//raise(HIGH_GOAL);
-		//dump();
+		//goLeft(ONE_LEFT_DRIVE);
+		//driveForward(ONE_FORWARD_DRIVE);
+		//realign();
+		tilt();
+		raise(HIGH_GOAL);
+		wait1Msec(2000);
+		dump();
 		break;
 	case 2:
 		goLeft(TWO_LEFT);
@@ -315,6 +326,6 @@ task main() {
 	default:
 		break;
 	}
+	lower();
 	//knockdownBalls();
-	//lower();
 }
