@@ -30,8 +30,8 @@ const tMUXSensor IRRight=msensor_S1_2;
 #define MAX_SPEED 55
 #define MIN_SPEED 10//lowest speed still moves
 #define SLOW_DOWN 700
-#define LIFT_SPEED_UP 30//speed while raising
-#define LIFT_SPEED_STOP 1//speed while holding
+#define LIFT_SPEED_STOP 1//speed
+#define LIFT_SPEED_UP 30//speed whwhile holding
 #define LIFT_SPEED_DOWN -3
 #define LIFT_BOTTOM 500
 #define LIFT_SLOW_DOWN 100
@@ -42,13 +42,13 @@ const tMUXSensor IRRight=msensor_S1_2;
 //position variables for all autos
 #define FORWARD_DRIVE 3000//distance to drive forward at the beginning of auto
 #define RIGHT_ALIGN 1500//distance to ram side of goal
-#define RIGHT_REALIGN 300//distance to back up and score
+#define RIGHT_REALIGN 500//distance to back up and score
 #define HIGH_GOAL 3600
 
 
 //variables for auto1
 #define ONE_LEFT_DRIVE 4000
-#define ONE_FORWARD_DRIVE 1500
+#define ONE_FORWARD_DRIVE 2150
 
 //variables for auto2
 #define TWO_SPIN 1800
@@ -69,13 +69,18 @@ void action(const string s) {
 void driveForward(int aTicks) {
 	int offset = nMotorEncoder[wheelC];
 	int speed=0;
+	bool changeSpeed=true;//increases speed every other update
 	while(nMotorEncoder[wheelC]-offset < aTicks/2) {//ramps up speed for just first half of distance
-		if(speed<MAX_SPEED)speed++;
+		if(speed<MAX_SPEED&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
 		cDir(-speed,-speed,speed,speed);
 		wait1Msec(5);
 	}
 	while(nMotorEncoder[wheelC]-offset < aTicks) {
-		if(speed>MIN_SPEED&&nMotorEncoder[wheelC]-offset> aTicks-SLOW_DOWN)speed--;//if close enough to target to use slow down, will slow
+		if(speed>MIN_SPEED&& nMotorEncoder[wheelC]-offset > aTicks-SLOW_DOWN ) speed--;//if close enough to target to use slow down, will slow
 		cDir(-speed,-speed,speed,speed);
 		wait1Msec(5);
 	}
@@ -85,8 +90,13 @@ void driveForward(int aTicks) {
 void driveBackward(int aTicks) {
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
+	bool changeSpeed = true;//increases speed every other update
 	while(nMotorEncoder[wheelB]-offset < aTicks/2) {//ramps up speed for first half
-		if(speed<MAX_SPEED)speed++;
+		if(speed<MAX_SPEED&&changeSpeed){
+			speed++
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
 		cDir(speed,speed,-speed,-speed);
 		wait1Msec(5);
 	}
@@ -101,8 +111,13 @@ void driveBackward(int aTicks) {
 void goLeft(int aTicks) {
 	int offset = nMotorEncoder[wheelA];
 	int speed=0;
+	bool changeSpeed=true;//only increases speed every other update
 	while(nMotorEncoder[wheelA]-offset < aTicks/2) {
-		if(speed<MAX_SPEED)speed++;
+		if(speed<MAX_SPEED&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
 		cDir(speed,-speed,-speed,speed);
 		wait1Msec(5);
 	}
@@ -117,8 +132,13 @@ void goLeft(int aTicks) {
 void goRight(int aTicks) {
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
+	bool changeSpeed=true;
 	while(nMotorEncoder[wheelB]-offset < aTicks/2) {
-		if(speed<MAX_SPEED)speed++;
+		if(speed<MAX_SPEED&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
 		cDir(-speed,speed,speed,-speed);
 		wait1Msec(5);
 	}
@@ -133,8 +153,13 @@ void goRight(int aTicks) {
 void spinRight(int aTicks){
 	int offset = nMotorEncoder[wheelA];
 	int speed=0;
+	bool changeSpeed=true;
 	while(abs(nMotorEncoder[wheelA]-offset) < aTicks/2) {
-		if(speed<MAX_SPEED)speed++;
+		if(speed<MAX_SPEED&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
 		cDir(-speed,-speed,-speed,-speed);
 		wait1Msec(5);
 	}
@@ -149,16 +174,26 @@ void realign() {
 	action("Realigning");
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
-	while(nMotorEncoder[wheelA]-offset < RIGHT_ALIGN) {
-		if(speed<MAX_SPEED)speed++;
+	bool changeSpeed=true;
+	while(nMotorEncoder[wheelB]-offset < RIGHT_ALIGN) {
+		if(speed<MAX_SPEED&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
 		cDir(-speed,speed,speed,-speed);
 	}
 	cDir(0,0,0,0);
 	wait1Msec(100);
 	offset = nMotorEncoder[wheelB];
 	speed=0;
+	changeSpeed=true;
 	while(abs(nMotorEncoder[wheelB]-offset) < RIGHT_REALIGN/2) {
-		if(speed<25)speed++;
+		if(speed<25&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
 		cDir(speed,-speed,-speed,speed);
 		wait1Msec(10);
 	}
@@ -257,8 +292,8 @@ task main() {
 	switch(getCenterThingPos()) {
 	case 1:
 		goLeft(ONE_LEFT_DRIVE);
-		//driveForwad(ONE_FORWARD_DRIVE);
-		//realign();
+		driveForward(ONE_FORWARD_DRIVE);
+		realign();
 		//raise(HIGH_GOAL);
 		//dump();
 		break;
