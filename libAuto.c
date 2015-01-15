@@ -22,7 +22,7 @@ const tMUXSensor IRRight=msensor_S1_2;
 #define TILT_POS 190
 
 //position variables for all autos
-#define FORWARD_DRIVE 3000//distance to drive forward at the beginning of auto
+#define FORWARD_DRIVE 3300//distance to drive forward at the beginning of auto
 #define RIGHT_ALIGN 1200//distance to ram side of goal
 #define RIGHT_REALIGN 350//distance to back up and score
 #define HIGH_GOAL 3550
@@ -134,6 +134,28 @@ void spinRight(int aTicks){
 	}
 	cDir(0,0,0,0);
 }
+
+void spinLeft(int aTicks){
+	int offset = nMotorEncoder[wheelA];
+	int speed=0;
+	bool changeSpeed=true;
+	while(abs(nMotorEncoder[wheelA]-offset) < aTicks/2) {
+		if(speed<MAX_SPEED&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
+		cDir(speed,speed,speed,speed);
+		wait1Msec(5);
+	}
+	while(abs(nMotorEncoder[wheelA]-offset) < aTicks) {
+		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>aTicks-SLOW_DOWN)speed--;
+		cDir(speed,speed,speed,speed);
+		wait1Msec(5);
+	}
+	cDir(0,0,0,0);
+}
+
 void realign() {
 	action("Realigning");
 	int offset = nMotorEncoder[wheelB];
@@ -179,7 +201,7 @@ int sampleHigh(int sensor,int samples) {
 }
 int getCenterThingPos() {
 	action("Getting Position");
-	return 1;
+	return 3;
 	int answer = 1;
 	bool ir1 = sampleHigh(1,10)>IR_TOLERANCE,ir2=sampleHigh(2,10)>IR_TOLERANCE;
 	if(ir1&&ir2)

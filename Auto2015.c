@@ -20,24 +20,17 @@
 #include "libAuto.c"
 
 
-
-
-
-
-
-
 //variables for auto1
 #define ONE_LEFT_DRIVE 4000
-#define ONE_FORWARD_DRIVE 2150
+#define ONE_FORWARD_DRIVE 1850
 
 //variables for auto2
-#define TWO_SPIN 1800
-#define TWO_BACK_DRIVE 600
-#define TWO_LEFT 1200
+#define TWO_SPIN 1200
+#define TWO_LEFT 2700
 
 //variables for auto3
 #define THREE_SPIN 1800
-#define THREE_BACK 570
+#define THREE_FORWARD 1300
 
 //variables for knocking down the post
 #define KD_FOREWARD 500
@@ -81,16 +74,18 @@ task main() {
 		break;
 	case 2:
 		goLeft(TWO_LEFT);
-		spinRight(TWO_SPIN);
-		driveBackward(TWO_BACK_DRIVE);
+		spinLeft(TWO_SPIN);
+		wait1Msec(250);
 		realign();
+		tilt();
 		raise(HIGH_GOAL);
 		dump();
 		break;
 	case 3:
-		spinRight(THREE_SPIN);
-		driveBackward(THREE_BACK);
-		realign();
+		spinLeft(THREE_SPIN);
+		driveForward(THREE_FORWARD);
+		//realign(); may not need for close dump
+		tilt();
 		raise(HIGH_GOAL);
 		dump();
 		break;
