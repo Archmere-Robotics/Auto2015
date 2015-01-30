@@ -26,11 +26,12 @@
 
 //variables for auto2
 #define TWO_SPIN 1200
-#define TWO_LEFT 2700
+#define TWO_LEFT 2750
+#define TWO_FORWARD 100
 
 //variables for auto3
 #define THREE_SPIN 1800
-#define THREE_FORWARD 1300
+#define THREE_FORWARD 1500
 
 //variables for knocking down the post
 #define KD_FOREWARD 500
@@ -38,16 +39,38 @@
 #define KD_SPIN 1000
 
 void init(){
-	action("Initializing");
-	nMotorEncoder[wheelA]=0;nMotorEncoder[wheelB]=0;nMotorEncoder[wheelC]=0;nMotorEncoder[wheelD]=0;nMotorEncoder[liftMotor]=0;
+	action("Initializing...");
+
+	action("-Checking battery:");
+	scrollText("  Ext: %2.1f",externalBatteryAvg/1000);
+	if(externalBatteryAvg==-1)
+		error("EXT BATTERY DISCONNECTED");
+	else if(externalBatteryAvg<EXT_LOW)
+		error("EXT BATTERY LOW");
+	scrollText("  NXT: %2.1f",nAvgBatteryLevel/1000);
+	if(nAvgBatteryLevel<NXT_LOW)
+		error("NXT BATTERY LOW");
+
+	action("-Resetting encoders...");
+	nMotorEncoder[wheelA]=0;
+	nMotorEncoder[wheelB]=0;
+	nMotorEncoder[wheelC]=0;
+	nMotorEncoder[wheelD]=0;
+	nMotorEncoder[liftMotor]=0;
+	action("  Done");
+	action("-Init. Servos...");
 	servoChangeRate[dumpServo]=1;
 	servo[dumpServo]=HOLD_POS;
 	servo[leftIRServo]=LEFT_SERVO_POS;
 	servo[rightIRServo]=RIGHT_SERVO_POS;
 	servo[rightHook]=RIGHT_HOOK_DOWN;
+	action("  Done");
 	wait1Msec(100);
+	action("-Raising Lift...");
 	raise(LIFT_BOTTOM);
+	action("  Done");
 	wait1Msec(100);
+	action("-Done.");
 }
 
 void knockdownBalls() {
@@ -60,38 +83,37 @@ task main() {
 	action("Waiting...");
 	//waitForStart();
 	init();
-
+	action("Moving to IR...");
 	driveForward(FORWARD_DRIVE);
+	action("Checking IR...");
 	switch(getCenterThingPos()) {
 	case 1:
+		action(" Pos 1.");
 		goLeft(ONE_LEFT_DRIVE);
 		driveForward(ONE_FORWARD_DRIVE);
-		realign();
-		tilt();
-		raise(HIGH_GOAL);
-		wait1Msec(2000);
-		dump();
 		break;
 	case 2:
+		action(" Pos 2.");
 		goLeft(TWO_LEFT);
 		spinLeft(TWO_SPIN);
-		wait1Msec(250);
-		realign();
-		tilt();
-		raise(HIGH_GOAL);
-		dump();
+		driveForward(TWO_FORWARD);
 		break;
 	case 3:
+		action(" Pos 3.");
 		spinLeft(THREE_SPIN);
 		driveForward(THREE_FORWARD);
-		//realign(); may not need for close dump
-		tilt();
-		raise(HIGH_GOAL);
-		dump();
+		// may not need realign for close dump
 		break;
 	default:
-		break;
+		return;
 	}
+	wait1Msec(250);
+	realign();
+	tilt();
+	raise(HIGH_GOAL);
+	dump();
 	lower();
+	Stop();
+	wait1Msec(100000);
 	//knockdownBalls();
 }

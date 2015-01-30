@@ -6,29 +6,39 @@
 const tMUXSensor IRLeft=msensor_S1_1;
 const tMUXSensor IRRight=msensor_S1_2;
 #include "cdrivers\IRSeekerLib.h"
-#include "JoystickDriver.c"
+//#include "JoystickDriver.c"
 
 #define IR_TOLERANCE 25
 #define MAX_SPEED 55
 #define MIN_SPEED 10//lowest speed still moves
 #define SLOW_DOWN 700
 #define LIFT_SPEED_STOP 0//speed
-#define LIFT_SPEED_UP 30//speed whwhile holding
+#define LIFT_SPEED_UP 30//speed while holding
 #define LIFT_SPEED_DOWN -10
 #define LIFT_BOTTOM 500
 #define LIFT_SLOW_DOWN 100
 #define HOLD_POS 172
-#define DUMP_POS 148
+#define DUMP_POS 152
 #define TILT_POS 190
+#define EXT_LOW 11000//11v
+#define NXT_LOW 7000//7v
 
 //position variables for all autos
 #define FORWARD_DRIVE 3300//distance to drive forward at the beginning of auto
-#define RIGHT_ALIGN 1200//distance to ram side of goal
-#define RIGHT_REALIGN 350//distance to back up and score
+#define RIGHT_ALIGN 700//distance to ram side of goal
+#define RIGHT_REALIGN 400//distance to back up and score
 #define HIGH_GOAL 3550
 
 void action(const string s) {
-	displayCenteredTextLine(3,s);
+	scrollText(s);
+}
+void error(const string s) {
+	scrollText(s);
+	for(int i=0; i<100; i++){
+		playTone(i,10);
+		wait1Msec(95);
+	}
+	wait1Msec(10000);
 }
 void driveForward(int aTicks) {
 	int offset = nMotorEncoder[wheelC];
@@ -92,13 +102,12 @@ void goLeft(int aTicks) {
 	}
 	cDir(0,0,0,0);
 }
-
-void goRight(int aTicks) {
+void goRight(int aTicks, int maxSpeed) {
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
 	bool changeSpeed=true;
 	while(nMotorEncoder[wheelB]-offset < aTicks/2) {
-		if(speed<MAX_SPEED&&changeSpeed){
+		if(speed<maxSpeed&&changeSpeed){
 			speed++;
 			changeSpeed=false;
 		}
@@ -107,13 +116,16 @@ void goRight(int aTicks) {
 		wait1Msec(5);
 	}
 	while(nMotorEncoder[wheelB]-offset < aTicks) {
-		if(speed>MIN_SPEED&&nMotorEncoder[wheelB]-offset> aTicks-SLOW_DOWN)speed--;
+		if(speed>MIN_SPEED&&nMotorEncoder[wheelB]-offset> aTicks-SLOW_DOWN)
+			speed--;
 		cDir(speed,-speed,-speed,speed);
 		wait1Msec(5);
 	}
 	cDir(0,0,0,0);
 }
-
+void goRight(int aTicks) {
+	goRight(aTicks, MOTOR_MAX);
+}
 void spinRight(int aTicks){
 	int offset = nMotorEncoder[wheelA];
 	int speed=0;
@@ -161,19 +173,22 @@ void realign() {
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
 	bool changeSpeed=true;
+	//smash into the goal
 	while(nMotorEncoder[wheelB]-offset < RIGHT_ALIGN) {
 		if(speed<MAX_SPEED&&changeSpeed){
 			speed++;
 			changeSpeed=false;
-		}
-		else changeSpeed=true;
+		} else
+			changeSpeed=true;
 		cDir(-speed,speed,speed,-speed);
 	}
+
 	cDir(0,0,0,0);
 	wait1Msec(100);
 	offset = nMotorEncoder[wheelB];
 	speed=0;
 	changeSpeed=true;
+	//move back a bit
 	while(abs(nMotorEncoder[wheelB]-offset) < RIGHT_REALIGN/2) {
 		if(speed<25&&changeSpeed){
 			speed++;
@@ -201,7 +216,7 @@ int sampleHigh(int sensor,int samples) {
 }
 int getCenterThingPos() {
 	action("Getting Position");
-	return 3;
+	return 1;
 	int answer = 1;
 	bool ir1 = sampleHigh(1,10)>IR_TOLERANCE,ir2=sampleHigh(2,10)>IR_TOLERANCE;
 	if(ir1&&ir2)
@@ -243,14 +258,18 @@ void tilt(){
 	wait1Msec(500);
 }
 void dump(){
-	action("Dumping");
+	action("Dumping...");
+	//move a bit closer to goal
+	goRight(150, 30);
+	//move dump to drop balls
 	int temp=servo[dumpServo];
 	while(servo[dumpServo]>DUMP_POS){
 		servo[dumpServo]=temp--;
 		wait1Msec(10);
 	}
 	wait1Msec(3000);
-	tilt();
+	tilt();//move dump back
+	action(" Done.");
 }
 
 void lower(){
