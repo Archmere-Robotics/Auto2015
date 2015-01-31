@@ -41,15 +41,15 @@
 void init(){
 	action("Initializing...");
 
-	action("-Checking battery:");
-	scrollText("  Ext: %2.1f",externalBatteryAvg/1000);
-	if(externalBatteryAvg==-1)
-		error("EXT BATTERY DISCONNECTED");
-	else if(externalBatteryAvg<EXT_LOW)
-		error("EXT BATTERY LOW");
-	scrollText("  NXT: %2.1f",nAvgBatteryLevel/1000);
-	if(nAvgBatteryLevel<NXT_LOW)
-		error("NXT BATTERY LOW");
+	//action("-Checking battery:");
+	//scrollText("  Ext: %2.1f",externalBatteryAvg/1000);
+	//if(externalBatteryAvg==-1)
+	//	error("EXT BATTERY DISCONNECTED");
+	//else if(externalBatteryAvg<EXT_LOW)
+	//	error("EXT BATTERY LOW");
+	//scrollText("  NXT: %2.1f",nAvgBatteryLevel/1000);
+	//if(nAvgBatteryLevel<NXT_LOW)
+	//	error("NXT BATTERY LOW");
 
 	action("-Resetting encoders...");
 	nMotorEncoder[wheelA]=0;
