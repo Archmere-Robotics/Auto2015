@@ -1,13 +1,11 @@
 #include "libHolonomics.c"
 
 #include "ht-drivers\hitechnic-sensormux.h"
-#include "ht-drivers\hitechnic-irseeker-v2.h"
-
 #define IRLEFT
 #define IRRIGHT
 const tMUXSensor IRLeft=msensor_S1_1;
 const tMUXSensor IRRight=msensor_S1_4;
-
+#include "cdrivers\IRSeekerLib.h"
 #include "JoystickDriver.c"
 
 #define IR_TOLERANCE 25
@@ -207,28 +205,45 @@ void realign() {
 	}
 	cDir(0,0,0,0);
 }
-
-
+static int sampleHigh(bool right, int sensor,int samples) {
+	int max=0;
+	for(int i=0;i<samples;i++) {
+		udVal();
+		int cv;
+		if(right)
+			cv=racValues[sensor];
+		else
+			cv=lacValues[sensor];
+		max=(max>cv)?max:cv;
+		wait1Msec(5);
+	}
+	return max;
+}
 int getCenterThingPos() {
-	action("Getting Position");
-	int answer = 1;//default
-
-	int ldcS1, ldcS2, ldcS3, ldcS4, ldcS5 = 0;
-	int lacS1, lacS2, lacS3, lacS4, lacS5 = 0;
-	int rdcS1, rdcS2, rdcS3, rdcS4, rdcS5 = 0;
-	int racS1, racS2, racS3, racS4, racS5 = 0;
-
-	int lacDir = HTIRS2readACDir(IRLeft);
-	int racDir = HTIRS2readACDir(IRRight);
-	int ldcDir = HTIRS2readDCDir(IRLeft);
-	int rdcDir = HTIRS2readDCDir(IRRight);
-
-	HTIRS2readAllACStrength(IRLeft, lacS1, lacS2, lacS3, lacS4, lacS5);
-	HTIRS2readAllDCStrength(IRLeft, ldcS1, ldcS2, ldcS3, ldcS4, ldcS5);
-	HTIRS2readAllACStrength(IRRight, racS1, racS2, racS3, racS4, racS5);
-	HTIRS2readAllDCStrength(IRRight, rdcS1, rdcS2, rdcS3, rdcS4, rdcS5);
-
-	for(int i=0;i<answer;i++){//beats out answer
+	action("Getting Position...");
+	int answer = 2;
+	int s1 = sampleHigh(true, 1,10);
+	int s2 = sampleHigh(true, 2,10);
+	if(s1<=10&&s2<=1
+		s1=sampleHigh(false, 1, 10);
+		//check left IR
+		s2=sampleHigh(false, 2, 10);
+		else if(s1>40)
+		if(s1>75&&s2>75)
+			answer=3;
+			answer= 2;
+		else
+			answer=1;
+	}else if(s1>75||s2>75)//read right sensor
+		if(s1>s2)
+			answer=3;
+		else
+			answer=1;
+	else{
+		answer=2;//right is on, but both lower than 75
+	}
+	scrollText("Vals:%d,1:%d,2:%d",answer,lacValues[1],lacValues[2]);
+	for(int i=0;i<answer;i++){
 		motor[heartbeat]=100;
 		wait1Msec(250);
 		motor[heartbeat]=0;

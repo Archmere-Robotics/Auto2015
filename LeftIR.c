@@ -114,7 +114,7 @@ void displayInstructions()
   nxtDisplayCenteredTextLine(5, "Connect SMUX to");
   nxtDisplayCenteredTextLine(6, "S1 and sensor to");
   nxtDisplayCenteredTextLine(7, "SMUX Port 1");
-  wait1Msec(2000);
+  //wait1Msec(2000);
 }
 
 // Minimize LCD screen flicker by only updating LCD when data has changed

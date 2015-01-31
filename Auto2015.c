@@ -72,16 +72,17 @@ void init(){
 	wait1Msec(100);
 	action("-Done.");
 }
-
+/*
 void knockdownBalls() {
 	driveForward(KD_FOREWARD);
 	goLeft(KD_LEFT);
 	spinRight(KD_SPIN);
-}
+}*/
 
 task main() {
 	action("Waiting...");
-	//waitForStart();
+	waitForStart();
+	bDisplayDiagnostics=false;
 	init();
 	action("Moving to IR...");
 	driveForward(FORWARD_DRIVE);
@@ -113,7 +114,7 @@ task main() {
 	raise(HIGH_GOAL);
 	dump();
 	lower();
+	bDisplayDiagnostics=true;
 	Stop();
-	wait1Msec(100000);
 	//knockdownBalls();
 }

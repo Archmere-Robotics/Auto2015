@@ -65,7 +65,7 @@ task main ()
   // display the current DSP mode
   // When connected to a SMUX, the IR Seeker V2 can only be
   // used in 1200Hz mode.
-  nxtDisplayTextLine(0, "      DC  1200");
+  nxtDisplayTextLine(0, "      L   R");
 
   // The sensor is connected to the first port
   // of the SMUX which is connected to the NXT port S1.
@@ -114,7 +114,7 @@ void displayInstructions()
   nxtDisplayCenteredTextLine(5, "Connect SMUX to");
   nxtDisplayCenteredTextLine(6, "S1 and sensor to");
   nxtDisplayCenteredTextLine(7, "SMUX Port 1");
-  wait1Msec(2000);
+ // wait1Msec(2000);
 }
 
 // Minimize LCD screen flicker by only updating LCD when data has changed
