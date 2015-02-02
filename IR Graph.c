@@ -7,7 +7,9 @@
 const tMUXSensor IRLeft=msensor_S4_1;
 const tMUXSensor IRRight=msensor_S4_4;
 #include "cdrivers\IRSeekerLib.h"
-#define bwc(test, value) test&value==value
+#if defined(IRRIGHT) %% defined(IRLEFT)
+#define BOTH_IR
+#endif
 
 void graph(int num, int x0, int val0, int x1, int val1) {
 	drawLine(x0, val0,x1, val1);
@@ -15,42 +17,44 @@ void graph(int num, int x0, int val0, int x1, int val1) {
 	displayStringAt(x0,6,"%d",num);
 }
 task main() {
-	if(!IRSetup())
-		return;
-
+	int lastButton=-1;
 	clearDebugStream();
+	bool ac=true;
+	bool right=true;
 	while(true) {
-		bool right = bwc(nNxtButtonPressed,1);
-		bool ac = (bwc(nNxtButtonPressed,2);
 		udVal();
 		eraseDisplay();
-		for(int i=0;i<5;i++){
-#if defined(IRRIGHT) && defined(IRLEFT)
-			if(right)
+		for(int i=0;i<5;i++) {
+#ifdef BOTH_IR
+			if(right) {
 #endif
 #ifdef IRRIGHT
+				//graph right ac/dc
 				if(ac)
 					graph(i,i*20+10, racValues[i]*94/255+6,((i+1)%4)*20+10, racValues[(i+1)%4]*94/255+6);
 				else
 					graph(i,i*20+10, rdcValues[i]*94/255+6,((i+1)%4)*20+10, rdcValues[(i+1)%4]*94/255+6);
 #endif
-#if defined(IRRIGHT) && defined(IRLEFT)
-			else
+#ifdef BOTH_IR
+			} else {
 #endif
 #ifdef IRLEFT
+				//graph left ac/dc
 				if(ac)
 					graph(i,i*20+10, lacValues[i]*94/255+6,((i+1)%4)*20+10, lacValues[(i+1)%4]*94/255+6);
 				else
 					graph(i,i*20+10, ldcValues[i]*94/255+6,((i+1)%4)*20+10, ldcValues[(i+1)%4]*94/255+6);
 #endif
-
-			//	drawLine((i-1)*20+10, ldcValues[i-1]*94/255+6,(i)*20+10, ldcValues[i]*94/255+6);
-			//drawLine((i-1)*20, rValues[i-1]*96/255+6,(i)*20, rValues[i]*96/255+6);
-		}
+#ifdef BOTH_IR
+			}//right/left if close
+#endif
+		}//for loop close
 		//drawLine(highLeft()*20, 7, highLeft()*20, 100);
 		//drawLine(highRight()*20, 7, highRight()*20, 100);
-		displayString(1, "%d/%d/%d",highLeftAC(), highRightAC(), nNxtButtonPressed);
+		string tmp=right?"R":"L";
+		strcat(tmp, ac?"AC":"DC");
+		displayString(1, "%d/%d/%d/%s",highLeftAC(), highRightAC(), nNxtButtonPressed, tmp);
 
 		wait1Msec(20);
-	}
+	}//main loop close
 }

@@ -1,39 +1,40 @@
 #include "libHolonomics.c"
 
 #include "ht-drivers\hitechnic-sensormux.h"
-#define IRLEFT
+const tMUXSensor IRLeft=msensor_S4_1;
+const tMUXSensor IRRight=msensor_S4_4;
 #define IRRIGHT
-const tMUXSensor IRLeft=msensor_S1_1;
-const tMUXSensor IRRight=msensor_S1_4;
+#define IRLEFT
 #include "cdrivers\IRSeekerLib.h"
+
 #include "JoystickDriver.c"
 
-#define IR_TOLERANCE 25
 #define MAX_SPEED 55
-#define MIN_SPEED 10//lowest speed still moves
+#define MIN_SPEED 10//lowest speed that still moves
 #define SLOW_DOWN 700
 #define LIFT_SPEED_STOP 0//speed
-#define LIFT_SPEED_UP 30//speed while holding
-#define LIFT_SPEED_DOWN -10
+#define LIFT_SPEED_UP 50//speed while holding
+#define LIFT_SPEED_DOWN -10//speed at which to go down at
 #define LIFT_BOTTOM 500
 #define LIFT_SLOW_DOWN 100
-#define HOLD_POS 172
-#define DUMP_POS 152
+//half pipe servo value to really stop balls from falling out while going up (pretty tilted left)
 #define TILT_POS 190
-#define EXT_LOW 11000//11v
-#define NXT_LOW 7000//7v
+//half pipe servo to rest at (tilted left, almost flat)
+#define HOLD_POS 172
+//half pipe servo to dump balls at (pretty tilted right)
+#define DUMP_POS 152
 
 //position variables for all autos
 #define FORWARD_DRIVE 3300//distance to drive forward at the beginning of auto
 #define RIGHT_ALIGN 700//distance to ram side of goal
 #define RIGHT_REALIGN 400//distance to back up and score
-#define HIGH_GOAL 3550
+#define HIGH_GOAL 3550//height to high hoal
 
 void action(const string s) {
 	scrollText(s);
 }
 void error(const string s) {
-	scrollText(s);
+	action(s);
 	for(int i=0; i<100; i++){
 		playTone(i,10);
 		wait1Msec(95);
@@ -42,19 +43,19 @@ void error(const string s) {
 }
 void driveForward(int aTicks) {
 	int offset = nMotorEncoder[wheelC];
-	int speed=0;
-	bool changeSpeed=true;//increases speed every other update
+	int speedCounter = 0;//current speed to move the motor
+	const float speedRatio = 0.5;//(1:2) ratio of speed (variable):actual motor speed
 	while(nMotorEncoder[wheelC]-offset < aTicks/2) {//ramps up speed for just first half of distance
-		if(speed<MAX_SPEED&&changeSpeed){
-			speed++;
-			changeSpeed=false;
-		}
-		else changeSpeed=true;
+		if(speedCounter*speedRatio<MAX_SPEED)
+			speedCounter++;
+		int speed=speedCounter*speedRatio;
 		cDir(-speed,-speed,speed,speed);
 		wait1Msec(5);
 	}
+	int speed=speedCounter*speedRatio;
 	while(nMotorEncoder[wheelC]-offset < aTicks) {
-		if(speed>MIN_SPEED&& nMotorEncoder[wheelC]-offset > aTicks-SLOW_DOWN ) speed--;//if close enough to target to use slow down, will slow
+		if(speed>MIN_SPEED&& nMotorEncoder[wheelC]-offset > aTicks-SLOW_DOWN )
+			speed--;//if close enough to target to use slow down, will slow
 		cDir(-speed,-speed,speed,speed);
 		wait1Msec(5);
 	}
@@ -63,19 +64,19 @@ void driveForward(int aTicks) {
 
 void driveBackward(int aTicks) {
 	int offset = nMotorEncoder[wheelB];
-	int speed=0;
-	bool changeSpeed = true;//increases speed every other update
+	int speedCounter = 0;//current speed to move the motor
+	const float speedRatio = 0.5;//(1:2) ratio of speed (variable):actual motor speed
 	while(nMotorEncoder[wheelB]-offset < aTicks/2) {//ramps up speed for first half
-		if(speed<MAX_SPEED&&changeSpeed){
-			speed++
-			changeSpeed=false;
-		}
-		else changeSpeed=true;
+		if(speedCounter*speedRatio<MAX_SPEED)
+			speedCounter++;
+		int speed=speedCounter*speedRatio;
 		cDir(speed,speed,-speed,-speed);
 		wait1Msec(5);
 	}
+	int speed=speedCounter*speedRatio;
 	while(nMotorEncoder[wheelB]-offset < aTicks) {
-		if(speed>MIN_SPEED&&nMotorEncoder[wheelB]-offset>aTicks-SLOW_DOWN)speed--;//if close enough to target to use slow down, will slow
+		if(speed>MIN_SPEED&&nMotorEncoder[wheelB]-offset>aTicks-SLOW_DOWN)
+			speed--;//if close enough to target to use slow down, will slow
 		cDir(speed,speed,-speed,-speed);
 		wait1Msec(5);
 	}
@@ -84,19 +85,19 @@ void driveBackward(int aTicks) {
 
 void goLeft(int aTicks) {
 	int offset = nMotorEncoder[wheelA];
-	int speed=0;
-	bool changeSpeed=true;//only increases speed every other update
+	int speedCounter = 0;//current speed to move the motor
+	const float speedRatio = 0.5;//(1:2) ratio of speed (variable):actual motor speed
 	while(nMotorEncoder[wheelA]-offset < aTicks/2) {
-		if(speed<MAX_SPEED&&changeSpeed){
-			speed++;
-			changeSpeed=false;
-		}
-		else changeSpeed=true;
+		if(speedCounter*speedRatio<MAX_SPEED)
+			speedCounter++;
+		int speed=speedCounter*speedRatio;
 		cDir(speed,-speed,-speed,speed);
 		wait1Msec(5);
 	}
+	int speed=speedCounter*speedRatio;
 	while(nMotorEncoder[wheelA]-offset < aTicks) {
-		if(speed>MIN_SPEED&&nMotorEncoder[wheelA]-offset> aTicks-SLOW_DOWN)speed--;
+		if(speed>MIN_SPEED&&nMotorEncoder[wheelA]-offset> aTicks-SLOW_DOWN)
+			speed--;
 		cDir(speed,-speed,-speed,speed);
 		wait1Msec(5);
 	}
@@ -104,17 +105,16 @@ void goLeft(int aTicks) {
 }
 void goRight(int aTicks, int maxSpeed) {
 	int offset = nMotorEncoder[wheelB];
-	int speed=0;
-	bool changeSpeed=true;
+	int speedCounter = 0;//current speed to move the motor
+	const float speedRatio = 0.5;//(1:2) ratio of speed (variable):actual motor speed
 	while(nMotorEncoder[wheelB]-offset < aTicks/2) {
-		if(speed<maxSpeed&&changeSpeed){
-			speed++;
-			changeSpeed=false;
-		}
-		else changeSpeed=true;
+		if(speedCounter*speedRatio<MAX_SPEED)
+			speedCounter++;
+		int speed=speedCounter*speedRatio;
 		cDir(-speed,speed,speed,-speed);
 		wait1Msec(5);
 	}
+	int speed=speedCounter*speedRatio;
 	while(nMotorEncoder[wheelB]-offset < aTicks) {
 		if(speed>MIN_SPEED&&nMotorEncoder[wheelB]-offset> aTicks-SLOW_DOWN)
 			speed--;
@@ -128,17 +128,16 @@ void goRight(int aTicks) {
 }
 void spinRight(int aTicks){
 	int offset = nMotorEncoder[wheelA];
-	int speed=0;
-	bool changeSpeed=true;
+	int speedCounter = 0;//current speed to move the motor
+	const float speedRatio = 0.5;//(1:2) ratio of speed (variable):actual motor speed
 	while(abs(nMotorEncoder[wheelA]-offset) < aTicks/2) {
-		if(speed<MAX_SPEED&&changeSpeed){
-			speed++;
-			changeSpeed=false;
-		}
-		else changeSpeed=true;
+		if(speedCounter*speedRatio<MAX_SPEED)
+			speedCounter++;
+		int speed=speedCounter*speedRatio;
 		cDir(-speed,-speed,-speed,-speed);
 		wait1Msec(5);
 	}
+	int speed=speedCounter*speedRatio;
 	while(abs(nMotorEncoder[wheelA]-offset) < aTicks) {
 		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>aTicks-SLOW_DOWN)speed--;
 		cDir(-speed,-speed,-speed,-speed);
@@ -149,17 +148,16 @@ void spinRight(int aTicks){
 
 void spinLeft(int aTicks){
 	int offset = nMotorEncoder[wheelA];
-	int speed=0;
-	bool changeSpeed=true;
+	int speedCounter = 0;//current speed to move the motor
+	const float speedRatio = 0.5;//(1:2) ratio of speed (variable):actual motor speed
 	while(abs(nMotorEncoder[wheelA]-offset) < aTicks/2) {
-		if(speed<MAX_SPEED&&changeSpeed){
-			speed++;
-			changeSpeed=false;
-		}
-		else changeSpeed=true;
+		if(speedCounter*speedRatio<MAX_SPEED)
+			speedCounter++;
+		int speed=speedCounter*speedRatio;
 		cDir(speed,speed,speed,speed);
 		wait1Msec(5);
 	}
+	int speed=speedCounter*speedRatio;
 	while(abs(nMotorEncoder[wheelA]-offset) < aTicks) {
 		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>aTicks-SLOW_DOWN)speed--;
 		cDir(speed,speed,speed,speed);
@@ -175,11 +173,8 @@ void realign() {
 	bool changeSpeed=true;
 	//smash into the goal
 	while(nMotorEncoder[wheelB]-offset < RIGHT_ALIGN) {
-		if(speed<MAX_SPEED&&changeSpeed){
+		if(changeSpeed=!changeSpeed && speed<MAX_SPEED)
 			speed++;
-			changeSpeed=false;
-		} else
-			changeSpeed=true;
 		cDir(-speed,speed,speed,-speed);
 	}
 
@@ -205,64 +200,41 @@ void realign() {
 	}
 	cDir(0,0,0,0);
 }
-static int sampleHigh(bool right, int sensor,int samples) {
-	int max=0;
-	for(int i=0;i<samples;i++) {
-		udVal();
-		int cv;
-		if(right)
-			cv=racValues[sensor];
-		else
-			cv=lacValues[sensor];
-		max=(max>cv)?max:cv;
-		wait1Msec(5);
-	}
-	return max;
-}
-int getCenterThingPos() {
-	action("Getting Position...");
-	int answer = 2;
-	int s1 = sampleHigh(true, 1,10);
-	int s2 = sampleHigh(true, 2,10);
-	if(s1<=10&&s2<=1
-		s1=sampleHigh(false, 1, 10);
-		//check left IR
-		s2=sampleHigh(false, 2, 10);
-		else if(s1>40)
-		if(s1>75&&s2>75)
-			answer=3;
-			answer= 2;
-		else
-			answer=1;
-	}else if(s1>75||s2>75)//read right sensor
-		if(s1>s2)
-			answer=3;
-		else
-			answer=1;
-	else{
-		answer=2;//right is on, but both lower than 75
-	}
-	scrollText("Vals:%d,1:%d,2:%d",answer,lacValues[1],lacValues[2]);
-	for(int i=0;i<answer;i++){
-		motor[heartbeat]=100;
-		wait1Msec(250);
-		motor[heartbeat]=0;
-		wait1Msec(250);
-	}
-	return answer;
-}
 
-void raise(int height){
-	int speed = 0;
+void raise(int height, bool maybefail){
+	int speed=0;
+	int notMoved=0;//cycles of the loop that the motor encoder value hasn't changed
+	int last=nMotorEncoder[liftMotor];
 	while(nMotorEncoder[liftMotor] < height-LIFT_SLOW_DOWN){//speed up and majority of movement
 		if(speed<LIFT_SPEED_UP)
 			speed++;
 		motor[liftMotor]=speed;
+		if(speed>10 && last==nMotorEncoder[liftMotor])
+			notMoved++;
+		else
+			notMoved=0;
+		if(maybefail && notMoved>500){
+			scrollText("Failed to lift (A).");
+			break;
+		}
+		last=nMotorEncoder[liftMotor];
+		wait1Msec(1);
 	}
+	notMoved=0;
 	while(nMotorEncoder[liftMotor] < height){//lift motor not yet at target
 		if(speed>5)
 			speed--;
 		motor[liftMotor]=speed;
+		if(speed>10 && last==nMotorEncoder[liftMotor])
+			notMoved++;
+		else
+			notMoved=0;
+		if(maybefail && notMoved>500){
+			scrollText("Failed to lift (A).");
+			break;
+		}
+		last=nMotorEncoder[liftMotor];
+		wait1Msec(1);
 	}
 	motor[liftMotor]=LIFT_SPEED_STOP;
 	wait1Msec(500);
@@ -281,6 +253,7 @@ void dump(){
 	//move a bit closer to goal
 	goRight(150, 30);
 	//move dump to drop balls
+
 	int temp=servo[dumpServo];
 	while(servo[dumpServo]>DUMP_POS){
 		servo[dumpServo]=temp--;
@@ -290,10 +263,69 @@ void dump(){
 	tilt();//move dump back
 	action(" Done.");
 }
-
 void lower(){
 	while(nMotorEncoder[liftMotor] > LIFT_BOTTOM){//lift motor not yet at target
 		motor[liftMotor]=LIFT_SPEED_DOWN;
 	}
 	motor[liftMotor]=LIFT_SPEED_STOP;
+}
+void lowerIR() {
+	servo[leftIRServo]=LEFT_IR_DOWN;
+	servo[rightIRServo]=RIGHT_IR_DOWN;
+	servoTarget[leftIRServo]=LEFT_IR_DOWN;
+	servoTarget[rightIRServo]=RIGHT_IR_DOWN;
+	servoChangeRate[leftIRServo]=10;
+	servoChangeRate[rightIRServo]=10;
+}
+void raiseIR() {
+	servo[leftIRServo]=LEFT_IR_UP;
+	servo[rightIRServo]=RIGHT_IR_UP;
+	servoTarget[leftIRServo]=LEFT_IR_UP;
+	servoTarget[rightIRServo]=RIGHT_IR_UP;
+	servoChangeRate[leftIRServo]=10;
+	servoChangeRate[rightIRServo]=10;
+}
+static int sampleHigh(bool right, int sensor, int samples) {
+	int max=0;
+	for(int i=0;i<samples;i++) {
+		udVal();
+		int current;
+		if(right)
+			current=racValues[sensor];
+		else
+			current=lacValues[sensor];
+		if(max<current)
+			max=current;
+		wait1Msec(5);
+	}
+	return max;
+}
+int getCenterThingPos() {
+	action("Getting Position...");
+	int answer = 2;
+	if(HTIRS2readACDir(IRLeft)<0)
+		return -1;
+	if(HTIRS2readACDir(IRRight)<0)
+		return -1;
+	//int r0 = sampleHigh(true, 0, 10);//right 0
+	int r1 = sampleHigh(true, 1, 10);//right 1
+	int r2 = sampleHigh(true, 2, 10);//right 2
+	int l1 = sampleHigh(false,1, 10);//left 1
+	//int l2 = sampleHigh(false,2, 10);//left 2
+
+	if(l1>100)
+		answer = 3;
+	else if(r1>50||r2>50)
+		answer = 1;
+	else
+		answer = 2;
+
+	scrollText("Position: %d", answer);
+	for(int i=0;i<answer;i++){
+		motor[heartbeat]=100;
+		wait1Msec(250);
+		motor[heartbeat]=0;
+		wait1Msec(250);
+	}
+	return answer;
 }
