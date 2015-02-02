@@ -3,10 +3,12 @@
 #include "ht-drivers\hitechnic-sensormux.h"
 const tMUXSensor IRLeft=msensor_S4_1;
 const tMUXSensor IRRight=msensor_S4_4;
+const tMUXSensor TouchLeft = msensor_S4_2;
+const tMUXSensor TouchRight = msensor_S4_3;
 #define IRRIGHT
 #define IRLEFT
 #include "cdrivers\IRSeekerLib.h"
-
+#include "ht-drivers\lego-touch.h"
 #include "JoystickDriver.c"
 
 #define MAX_SPEED 55
@@ -165,7 +167,47 @@ void spinLeft(int aTicks){
 	}
 	cDir(0,0,0,0);
 }
+#ifdef USING_TOUCH
+void realign(){
+	action("Realigning with touch");
+	int offset = nMotorEncoder[wheelB];
+	int speed=0;
+	bool changeSpeed=true;
+	//smash into the goal
+	while(nMotorEncoder[wheelB]-offset < RIGHT_ALIGN) {
+		if(changeSpeed=!changeSpeed && speed<MAX_SPEED)
+			speed++;
+		cDir(-speed,speed,speed,-speed);
+	}
+	cDir(0,0,0,0);
 
+	//check touch sensors
+	ClearTimer(T1);
+	while(time1(T1<5000&&!(TSReadState(TouchLeft)&&TSreadState(TouchRight)){
+
+	}
+	wait1Msec(100);
+	offset = nMotorEncoder[wheelB];
+	speed=0;
+	changeSpeed=true;
+	//move back a bit
+	while(abs(nMotorEncoder[wheelB]-offset) < RIGHT_REALIGN/2) {
+		if(speed<25&&changeSpeed){
+			speed++;
+			changeSpeed=false;
+		}
+		else changeSpeed=true;
+		cDir(speed,-speed,-speed,speed);
+		wait1Msec(10);
+	}
+	while(abs(nMotorEncoder[wheelB]-offset) <RIGHT_REALIGN) {
+		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>SLOW_DOWN)speed--;
+		cDir(speed,-speed,-speed,speed);
+		wait1Msec(10);
+	}
+	cDir(0,0,0,0);
+}
+#else
 void realign() {
 	action("Realigning");
 	int offset = nMotorEncoder[wheelB];
@@ -200,6 +242,7 @@ void realign() {
 	}
 	cDir(0,0,0,0);
 }
+#endif
 
 void raise(int height, bool maybefail){
 	int speed=0;
