@@ -172,33 +172,45 @@ void realign(){
 	action("Realigning with touch");
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
-	bool changeSpeed=true;
 	//smash into the goal
 	while(nMotorEncoder[wheelB]-offset < RIGHT_ALIGN) {
-		if(changeSpeed=!changeSpeed && speed<MAX_SPEED)
+		if(speed<MAX_SPEED)
 			speed++;
 		cDir(-speed,speed,speed,-speed);
 	}
-	cDir(0,0,0,0);
 
+	speed = 20;
 	//check touch sensors
 	ClearTimer(T1);
-	while(time1(T1<5000&&!(TSReadState(TouchLeft)&&TSreadState(TouchRight)){
-
+	bool right = TSReadState(TouchRight);
+	bool left = TSReadState(TouchLeft);
+	while(time1(T1<5000&&!(left&&right){
+		right = TSReadState(TouchRight);
+		left = TSReadState(TouchLeft);
+		if(!left&&!right)
+		{
+			cDir(-speed,-speed,speed,speed);
+		}
+		else if(left&&!right)
+		{
+			cDir(speed,-speed,-speed,speed);
+		}
+		else if(right&&!left)
+		{
+			cDir(-speed,speed,speed,-speed);
+		}
 	}
+	cDir(0,0,0,0);
 	wait1Msec(100);
 	offset = nMotorEncoder[wheelB];
 	speed=0;
-	changeSpeed=true;
 	//move back a bit
 	while(abs(nMotorEncoder[wheelB]-offset) < RIGHT_REALIGN/2) {
-		if(speed<25&&changeSpeed){
+		if(speed<25){
 			speed++;
-			changeSpeed=false;
 		}
-		else changeSpeed=true;
 		cDir(speed,-speed,-speed,speed);
-		wait1Msec(10);
+		wait1Msec(20);
 	}
 	while(abs(nMotorEncoder[wheelB]-offset) <RIGHT_REALIGN) {
 		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>SLOW_DOWN)speed--;
@@ -212,10 +224,9 @@ void realign() {
 	action("Realigning");
 	int offset = nMotorEncoder[wheelB];
 	int speed=0;
-	bool changeSpeed=true;
 	//smash into the goal
 	while(nMotorEncoder[wheelB]-offset < RIGHT_ALIGN) {
-		if(changeSpeed=!changeSpeed && speed<MAX_SPEED)
+		if(speed<MAX_SPEED)
 			speed++;
 		cDir(-speed,speed,speed,-speed);
 	}
@@ -224,16 +235,13 @@ void realign() {
 	wait1Msec(100);
 	offset = nMotorEncoder[wheelB];
 	speed=0;
-	changeSpeed=true;
 	//move back a bit
 	while(abs(nMotorEncoder[wheelB]-offset) < RIGHT_REALIGN/2) {
-		if(speed<25&&changeSpeed){
+		if(speed<25){
 			speed++;
-			changeSpeed=false;
 		}
-		else changeSpeed=true;
 		cDir(speed,-speed,-speed,speed);
-		wait1Msec(10);
+		wait1Msec(20);
 	}
 	while(abs(nMotorEncoder[wheelB]-offset) <RIGHT_REALIGN) {
 		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>SLOW_DOWN)speed--;
