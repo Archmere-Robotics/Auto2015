@@ -7,6 +7,9 @@ const tMUXSensor TouchLeft = msensor_S4_2;
 const tMUXSensor TouchRight = msensor_S4_3;
 #define IRRIGHT
 #define IRLEFT
+
+#define USING_TOUCH
+
 #include "cdrivers\IRSeekerLib.h"
 #include "ht-drivers\lego-touch.h"
 #include "JoystickDriver.c"
@@ -179,25 +182,35 @@ void realign(){
 		cDir(-speed,speed,speed,-speed);
 	}
 
-	speed = 20;
+	speed = 10;
 	//check touch sensors
-	ClearTimer(T1);
-	bool right = TSReadState(TouchRight);
-	bool left = TSReadState(TouchLeft);
-	while(time1(T1<5000&&!(left&&right){
-		right = TSReadState(TouchRight);
-		left = TSReadState(TouchLeft);
+	bool right = TSreadState(TouchRight);
+	bool left = TSreadState(TouchLeft);
+	string store ="";
+	string print = "";
+	clearTimer(T1);
+	while(time1(T1)<10000&&!(left&&right)){
+		right = TSreadState(TouchRight);
+		left = TSreadState(TouchLeft);
 		if(!left&&!right)
 		{
-			cDir(-speed,-speed,speed,speed);
+			store = "none";
+			cDir(-speed,speed,speed,-speed);
 		}
 		else if(left&&!right)
 		{
-			cDir(speed,-speed,-speed,speed);
+			store = "left";
+			cDir(-speed,-speed,speed,speed);
 		}
 		else if(right&&!left)
 		{
-			cDir(-speed,speed,speed,-speed);
+			store = "right";
+			cDir(speed,speed,-speed,-speed);
+		}
+		else store = "got it";
+		if(store!=print){
+			print = store;
+			scrollText(print);
 		}
 	}
 	cDir(0,0,0,0);
