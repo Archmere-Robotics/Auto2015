@@ -31,7 +31,7 @@ const tMUXSensor TouchRight = msensor_S4_3;
 
 //position variables for all autos
 #define FORWARD_DRIVE 3300//distance to drive forward at the beginning of auto
-#define RIGHT_ALIGN 700//distance to ram side of goal
+#define RIGHT_ALIGN 500//distance to ram side of goal
 #define RIGHT_REALIGN 400//distance to back up and score
 #define HIGH_GOAL 3550//height to high hoal
 
@@ -182,7 +182,7 @@ void realign(){
 		cDir(-speed,speed,speed,-speed);
 	}
 
-	speed = 10;
+	speed = 20;
 	//check touch sensors
 	bool right = TSreadState(TouchRight);
 	bool left = TSreadState(TouchLeft);
@@ -200,12 +200,12 @@ void realign(){
 		else if(left&&!right)
 		{
 			store = "left";
-			cDir(-speed,-speed,speed,speed);
+			cDir(-speed,-speed,speed/2,speed/2);
 		}
 		else if(right&&!left)
 		{
 			store = "right";
-			cDir(speed,speed,-speed,-speed);
+			cDir(speed,speed,-speed/2,-speed/2);
 		}
 		else store = "got it";
 		if(store!=print){
