@@ -2,14 +2,15 @@
 
 #include "ht-drivers\hitechnic-sensormux.h"
 #include "ht-drivers\lego-ultrasound.h"
-const tMUXSensor UltraLeft = msensor_S4_2;
-const tMUXSensor UltraRight = msensor_S4_3;
+const tMUXSensor LeftSensor = msensor_S4_2;
+const tMUXSensor RightSensor = msensor_S4_3;
 const tMUXSensor IRLeft=msensor_S4_1;
 const tMUXSensor IRRight=msensor_S4_4;
 #define IRRIGHT
 #define IRLEFT
 
-//#define USING_TOUCH
+#define USING_TOUCH
+//#define USING_US
 
 #include "cdrivers\IRSeekerLib.h"
 #include "ht-drivers\lego-touch.h"
@@ -183,16 +184,68 @@ void realign(){
 		cDir(-speed,speed,speed,-speed);
 	}
 
-	speed = 20;
+	speed = 10;
 	//check touch sensors
-	bool right = TSreadState(TouchRight);
-	bool left = TSreadState(TouchLeft);
+	bool right = TSreadState(RightSensor);
+	bool left = TSreadState(LeftSensor);
 	string store ="";
 	string print = "";
 	clearTimer(T1);
 	while(time1(T1)<10000&&!(left&&right)){
-		right = TSreadState(TouchRight);
-		left = TSreadState(TouchLeft);
+		right = TSreadState(RightSensor);
+		left = TSreadState(LeftSensor);
+		if(!left&&!right)
+		{
+			store = "none";
+			cDir(-speed,speed,speed,-speed);
+		}
+		else if(left&&!right)
+		{
+			store = "left";
+			cDir(-speed,-speed,speed/2,speed/2);
+		}
+		else if(right&&!left)
+		{
+			store = "right";
+			cDir(speed,speed,-speed/2,-speed/2);
+		}
+		else store = "got it";
+		if(store!=print){
+			print = store;
+			scrollText(print);
+		}
+	}
+	cDir(0,0,0,0);
+	wait1Msec(100);
+	offset = nMotorEncoder[wheelB];
+	speed=0;
+	//move back a bit
+	while(abs(nMotorEncoder[wheelB]-offset) < RIGHT_REALIGN/2) {
+		if(speed<25){
+			speed++;
+		}
+		cDir(speed,-speed,-speed,speed);
+		wait1Msec(20);
+	}
+	while(abs(nMotorEncoder[wheelB]-offset) <RIGHT_REALIGN) {
+		if(speed>MIN_SPEED&&abs(nMotorEncoder[wheelA]-offset)>SLOW_DOWN)speed--;
+		cDir(speed,-speed,-speed,speed);
+		wait1Msec(10);
+	}
+	cDir(0,0,0,0);
+}
+#elif USING_US
+void realign(){
+	action("Realigning with US");
+	int offset = nMotorEncoder[wheelB];
+	int speed=10
+	//check touch sensors
+	int left = USreadDist(LeftSensor);
+	int right = USreadDist(RightSensor);
+	clearTimer(T1);
+	while(time1(T1)<10000&&!(left&&right)){
+		left = USreadDist(LeftSensor
+		right = USreadDist(RightSensor);
 		if(!left&&!right)
 		{
 			store = "none";
@@ -369,9 +422,9 @@ static int sampleHigh(bool right, int sensor, int samples) {
 void align() {
 	//do stuff
 }
-int getUCData() {
-	int left = USreadDist(UltraLeft);
-	int right = USreadDist(UltraRight);
+int getUSData() {
+	int left = USreadDist(LeftSensor);
+	int right = USreadDist(RightSensor);
 	return 0;//TODO finish
 }
 int getCenterThingPos() {
