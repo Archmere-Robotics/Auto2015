@@ -1,14 +1,15 @@
 #include "libHolonomics.c"
 
 #include "ht-drivers\hitechnic-sensormux.h"
+#include "ht-drivers\lego-ultrasound.h"
+const tMUXSensor UltraLeft = msensor_S4_2;
+const tMUXSensor UltraRight = msensor_S4_3;
 const tMUXSensor IRLeft=msensor_S4_1;
 const tMUXSensor IRRight=msensor_S4_4;
-const tMUXSensor TouchLeft = msensor_S4_2;
-const tMUXSensor TouchRight = msensor_S4_3;
 #define IRRIGHT
 #define IRLEFT
 
-#define USING_TOUCH
+//#define USING_TOUCH
 
 #include "cdrivers\IRSeekerLib.h"
 #include "ht-drivers\lego-touch.h"
@@ -34,7 +35,7 @@ const tMUXSensor TouchRight = msensor_S4_3;
 #define RIGHT_ALIGN 500//distance to ram side of goal
 #define RIGHT_REALIGN 400//distance to back up and score
 #define HIGH_GOAL 3550//height to high hoal
-
+void align();
 void action(const string s) {
 	scrollText(s);
 }
@@ -314,6 +315,7 @@ void tilt(){
 }
 void dump(){
 	action("Dumping...");
+	align();
 	//move a bit closer to goal
 	goRight(150, 30);
 	//move dump to drop balls
@@ -363,6 +365,14 @@ static int sampleHigh(bool right, int sensor, int samples) {
 		wait1Msec(5);
 	}
 	return max;
+}
+void align() {
+	//do stuff
+}
+int getUCData() {
+	int left = USreadDist(UltraLeft);
+	int right = USreadDist(UltraRight);
+	return 0;//TODO finish
 }
 int getCenterThingPos() {
 	action("Getting Position...");
